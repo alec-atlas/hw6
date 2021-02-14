@@ -19,6 +19,7 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   // ⬇️ ⬇️ ⬇️
 
   let db = firebase.firestore()
+
   let apiKey = `5fb75a22a5b19cdea717398af48d6d30` 
   let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
   let json = await response.json()
@@ -45,13 +46,24 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   for (let i=0; i<movies.length; i++) {
     let movieId = movies[i].id
     let imageUrl = movies[i].poster_path
+    let watchedMoviesDataset = await db.collection('watched').doc(`${movieId}`).get()
+    let watchedMovies = watchedMoviesDataset.data()
+    console.log(watchedMovies)
 
-    document.querySelector(`.movies`).insertAdjacentHTML(`beforeend`,`
-      <div class="w-1/5 p-4 movie-${movieId}">
+    if (watchedMovies) {
+      document.querySelector(`.movies`).insertAdjacentHTML(`beforeend`,`
+      <div class="w-1/5 p-4 movie-${movieId} opacity-20">
         <img src="https://image.tmdb.org/t/p/w500/${imageUrl}" class="w-full">
         <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this!</a>
       </div>
       `)
+  
+    } else { document.querySelector(`.movies`).insertAdjacentHTML(`beforeend`,`
+      <div class="w-1/5 p-4 movie-${movieId}">
+        <img src="https://image.tmdb.org/t/p/w500/${imageUrl}" class="w-full">
+        <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this!</a>
+      </div>
+      `)}
   
   // ⬆️ ⬆️ ⬆️ 
   // End Step 2
@@ -68,11 +80,12 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   //   to remove the class if the element already contains it.
   // ⬇️ ⬇️ ⬇️
 
-  document.querySelector(`.movie-${movieId} .watched-button`).addEventListener(`click`, function(event) {
-    event.preventDefault()
-    document.querySelector(`.movie-${movieId}`).classList.add(`opacity-20`)
-  })
-}
+    document.querySelector(`.movie-${movieId} .watched-button`).addEventListener(`click`, async function(event) {
+      event.preventDefault()
+      document.querySelector(`.movie-${movieId}`).classList.add(`opacity-20`)
+      await db.collection('watched').doc(`${movieId}`).set({})
+    })
+  }
 
   // ⬆️ ⬆️ ⬆️ 
   // End Step 3
@@ -95,6 +108,4 @@ window.addEventListener('DOMContentLoaded', async function(event) {
   // - Hint: you can use if (document) with no comparison
   //   operator to test for the existence of an object.
 
-
-  
 })
